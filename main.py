@@ -2,16 +2,16 @@
 from kivy.app import App
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
-from kivy.core.text import LabelBase
+from kivy.core.text import LabelBase, DEFAULT_FONT
 from kivy.uix.image import Image
 from kivy.uix.textinput import TextInput
 from kivy.uix.spinner import Spinner
 import datetime
 import docx
-import numpy as n
 import csv
 from kivy.lang import Builder
 
+LabelBase.register(DEFAULT_FONT, 'simfang.ttf')
 LabelBase.register(name='SIMKAL',fn_regular='simfang.ttf')
 
 # 应用全局样式，解决下拉菜单选项中文乱码问题
@@ -25,10 +25,9 @@ class MyApp(App):
     global options2
     with open(r"条款.csv", 'r', encoding='gbk') as f:
         rows = list(csv.reader(f))
-    b = n.array(rows)
-
-    options1 = list(filter(None, b[0:, 0]))
-    options2 = list(filter(None, b[0:, 1]))
+    
+    options1 = [row[0] for row in rows if len(row) > 0 and row[0]]
+    options2 = [row[1] for row in rows if len(row) > 1 and row[1]]
     def build(self):
 
         # 创建一个BoxLayout作为容器
