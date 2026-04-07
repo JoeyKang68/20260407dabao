@@ -18,7 +18,7 @@ jobs:
             -w /home/user/hostcwd \
             --entrypoint /bin/bash \
             ghcr.io/kivy/buildozer:latest \
-            -lc "buildozer -v android debug"
+            -lc "export BUILDOZER_WARN_ON_ROOT=0 && buildozer -v android debug"
 
       - name: Upload APK
         if: always()
