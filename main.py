@@ -7,6 +7,7 @@ from kivy.uix.image import Image
 from kivy.uix.textinput import TextInput
 from kivy.uix.spinner import Spinner
 from kivy.resources import resource_find
+from kivy.utils import platform as kivy_platform
 import datetime
 import csv
 from kivy.lang import Builder
@@ -154,7 +155,13 @@ class MyApp(App):
                                     
                 tree.write(doc_xml_path, xml_declaration=True, encoding='UTF-8')
                 
-                output_filename = f"道路交通事故认定书{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分许')}.docx"
+                output_dir = ''
+                if kivy_platform == 'android':
+                    output_dir = '/storage/emulated/0/Download/NJKC2026'
+                else:
+                    output_dir = os.path.join(os.getcwd(), 'NJKC2026')
+                os.makedirs(output_dir, exist_ok=True)
+                output_filename = os.path.join(output_dir, f"道路交通事故认定书{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分许')}.docx")
                 with zipfile.ZipFile(output_filename, 'w', zipfile.ZIP_DEFLATED) as docx_zip:
                     for root_dir, dirs, files in os.walk(temp_dir):
                         for file in files:
@@ -164,7 +171,7 @@ class MyApp(App):
                             
                 shutil.rmtree(temp_dir)
                 
-            doc_file = '简易空白test.docx'
+            doc_file = self._get_resource_path('简易空白test.docx')
             try:
                 doc_table_replace(doc_file)
                 print('替换完成')
