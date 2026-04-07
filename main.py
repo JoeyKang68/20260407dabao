@@ -6,6 +6,8 @@ from kivy.core.text import LabelBase, DEFAULT_FONT
 from kivy.uix.image import Image
 from kivy.uix.textinput import TextInput
 from kivy.uix.spinner import Spinner
+from kivy.uix.popup import Popup
+from kivy.uix.label import Label
 from kivy.resources import resource_find
 from kivy.utils import platform as kivy_platform
 import datetime
@@ -170,13 +172,24 @@ class MyApp(App):
                             docx_zip.write(file_path, arcname)
                             
                 shutil.rmtree(temp_dir)
+                return output_filename
                 
             doc_file = self._get_resource_path('简易空白test.docx')
             try:
-                doc_table_replace(doc_file)
-                print('替换完成')
+                saved_path = doc_table_replace(doc_file)
+                Popup(
+                    title='保存成功',
+                    content=Label(text=saved_path, font_name='SIMKAL'),
+                    size_hint=(0.9, 0.4),
+                    auto_dismiss=True
+                ).open()
             except Exception as e:
-                print('Error:', e)
+                Popup(
+                    title='保存失败',
+                    content=Label(text=str(e), font_name='SIMKAL'),
+                    size_hint=(0.9, 0.4),
+                    auto_dismiss=True
+                ).open()
         btn2 = Button(text='保存',font_name='SIMKAL', size_hint=(0.2, 0.1),pos_hint={'x': 0.4, 'y': 0.5}, on_press=button_callback2)
         # 绑定选择事件
         spinner1.bind(text=self.on_spinner_select1)
