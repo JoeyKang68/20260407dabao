@@ -14,7 +14,8 @@ source.dir = .
 
 # (list) Source files to include (let empty to include all the files)
 source.include_exts = py,png,jpg,kv,atlas,ttf,csv,docx
-source.include_patterns = 条款.csv,*.csv,简易空白test.docx,simfang.ttf,picture.jpg
+source.include_patterns = *.csv,simfang.ttf,picture.jpg,顺顺荔荔.jpg,tiaokuan.csv
+source.exclude_patterns = test_docx.py,__pycache__/*,.git/*,.github/*
 
 # (str) Application versioning (method 1)
 version = 0.1

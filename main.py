@@ -39,7 +39,7 @@ class MyApp(App):
         return name
 
     def _load_clause_rows(self):
-        candidates = ['条款.csv', 'tiaokuan.csv']
+        candidates = ['tiaokuan.csv', '条款.csv']
         encodings = ['gbk', 'gb18030', 'utf-8-sig', 'utf-8']
         for filename in candidates:
             file_path = self._get_resource_path(filename)
