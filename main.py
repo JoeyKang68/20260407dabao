@@ -12,6 +12,7 @@ from kivy.resources import resource_find
 from kivy.utils import platform as kivy_platform
 import datetime
 import csv
+import os
 from kivy.lang import Builder
 
 font_file = resource_find('simfang.ttf') or 'simfang.ttf'
@@ -107,10 +108,48 @@ class MyApp(App):
 
         # 定义一个函数，当按钮被点击时调用
         def button_callback2(instance):
+            def build_fallback_template(template_path):
+                import zipfile
+                paragraph_xml = []
+                paragraph_xml.append('<w:p><w:r><w:t>num</w:t></w:r></w:p>')
+                for token in list1[1:]:
+                    paragraph_xml.append(f'<w:p><w:r><w:t>{str(token)}</w:t></w:r></w:p>')
+                document_xml = (
+                    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                    '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+                    '<w:body>'
+                    + ''.join(paragraph_xml) +
+                    '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1800" w:bottom="1440" w:left="1800" w:header="851" w:footer="992" w:gutter="0"/></w:sectPr>'
+                    '</w:body>'
+                    '</w:document>'
+                )
+                content_types_xml = (
+                    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+                    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+                    '<Default Extension="xml" ContentType="application/xml"/>'
+                    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+                    '</Types>'
+                )
+                rels_xml = (
+                    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+                    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'
+                    '</Relationships>'
+                )
+                doc_rels_xml = (
+                    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>'
+                )
+                with zipfile.ZipFile(template_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+                    zf.writestr('[Content_Types].xml', content_types_xml)
+                    zf.writestr('_rels/.rels', rels_xml)
+                    zf.writestr('word/document.xml', document_xml)
+                    zf.writestr('word/_rels/document.xml.rels', doc_rels_xml)
+
             def doc_table_replace(doc_file):
                 import zipfile
                 import xml.etree.ElementTree as ET
-                import os
                 import shutil
                 
                 temp_dir = 'temp_docx_dir'
@@ -175,6 +214,10 @@ class MyApp(App):
                 return output_filename
                 
             doc_file = self._get_resource_path('简易空白test.docx')
+            if not os.path.exists(doc_file):
+                doc_file = os.path.join(os.getcwd(), 'jianyi_kongbai_template.docx')
+                if not os.path.exists(doc_file):
+                    build_fallback_template(doc_file)
             try:
                 saved_path = doc_table_replace(doc_file)
                 Popup(
