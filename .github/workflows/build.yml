@@ -15,8 +15,10 @@ jobs:
           docker pull ghcr.io/kivy/buildozer:latest
           docker run --rm \
             -v "${{ github.workspace }}:/home/user/hostcwd" \
+            -w /home/user/hostcwd \
+            --entrypoint /bin/bash \
             ghcr.io/kivy/buildozer:latest \
-            buildozer -v android debug
+            -lc "buildozer -v android debug"
 
       - name: Upload APK
         if: always()
