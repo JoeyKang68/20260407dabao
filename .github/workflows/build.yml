@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   build-android:
-    runs-name: Android Build
+    name: Android Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
