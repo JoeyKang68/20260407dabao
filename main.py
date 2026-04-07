@@ -7,7 +7,6 @@ from kivy.uix.image import Image
 from kivy.uix.textinput import TextInput
 from kivy.uix.spinner import Spinner
 import datetime
-import docx
 import csv
 from kivy.lang import Builder
 
@@ -79,25 +78,71 @@ class MyApp(App):
         # 定义一个函数，当按钮被点击时调用
         def button_callback2(instance):
             def doc_table_replace(doc_file):
-                document=docx.Document(doc_file)
-                for para in document.paragraphs:
-                    for run in para.runs:
-                        if 'num' == run.text:
-                            run.text=run.text.replace('num',input1.text)
-                #对表格内容进行更改
-                for i in range(1, len(list1)):
-                    for table in document.tables:
-                        for row in table.rows:
-                            for cell in row.cells:
-                                if cell.text in 'aaaabbbbcccc':
-                                    cell.text=cell.text.replace(list1[i],'\t\t\t\t'+list2[i].text)
+                import zipfile
+                import xml.etree.ElementTree as ET
+                import os
+                import shutil
+                
+                temp_dir = 'temp_docx_dir'
+                if os.path.exists(temp_dir):
+                    shutil.rmtree(temp_dir)
+                
+                with zipfile.ZipFile(doc_file, 'r') as zip_ref:
+                    zip_ref.extractall(temp_dir)
+                
+                doc_xml_path = os.path.join(temp_dir, 'word', 'document.xml')
+                
+                namespaces = {
+                    'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
+                    'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
+                    'wp': 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing',
+                    'a': 'http://schemas.openxmlformats.org/drawingml/2006/main',
+                    'pic': 'http://schemas.openxmlformats.org/drawingml/2006/picture',
+                    'v': 'urn:schemas-microsoft-com:vml',
+                    'o': 'urn:schemas-microsoft-com:office:office',
+                    've': 'http://schemas.openxmlformats.org/markup-compatibility/2006',
+                    'w10': 'urn:schemas-microsoft-com:office:word',
+                    'wne': 'http://schemas.microsoft.com/office/word/2006/wordml',
+                    'm': 'http://schemas.openxmlformats.org/officeDocument/2006/math',
+                }
+                for prefix, uri in namespaces.items():
+                    ET.register_namespace(prefix, uri)
+                    
+                tree = ET.parse(doc_xml_path)
+                root = tree.getroot()
+                
+                for t in root.findall('.//w:t', namespaces):
+                    if t.text:
+                        if 'num' == t.text:
+                            t.text = t.text.replace('num', input1.text)
+                        
+                        for i in range(1, len(list1)):
+                            # 注意: list1 中的元素有些是数字，需要转为字符串
+                            str_key = str(list1[i])
+                            if str_key in t.text:
+                                if t.text in 'aaaabbbbcccc':
+                                    t.text = t.text.replace(str_key, '\t\t\t\t' + list2[i].text)
                                 else:
-                                    cell.text = cell.text.replace(list1[i], list2[i].text)
-
-                document.save(f"道路交通事故认定书{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分许')}.docx")
-            doc_file= '简易空白test.docx'
-            doc_table_replace(doc_file)
-            print('替换完成')
+                                    t.text = t.text.replace(str_key, list2[i].text)
+                                    
+                tree.write(doc_xml_path, xml_declaration=True, encoding='UTF-8')
+                
+                output_filename = f"道路交通事故认定书{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分许')}.docx"
+                with zipfile.ZipFile(output_filename, 'w', zipfile.ZIP_DEFLATED) as docx_zip:
+                    for root_dir, dirs, files in os.walk(temp_dir):
+                        for file in files:
+                            file_path = os.path.join(root_dir, file)
+                            arcname = os.path.relpath(file_path, temp_dir).replace('\\', '/')
+                            docx_zip.write(file_path, arcname)
+                            
+                shutil.rmtree(temp_dir)
+                
+            doc_file = '简易空白test.docx'
+            try:
+                doc_table_replace(doc_file)
+                print('替换完成')
+            except Exception as e:
+                print('Error:', e)
         btn2 = Button(text='保存',font_name='SIMKAL', size_hint=(0.2, 0.1),pos_hint={'x': 0.4, 'y': 0.5}, on_press=button_callback2)
         # 绑定选择事件
         spinner1.bind(text=self.on_spinner_select1)
