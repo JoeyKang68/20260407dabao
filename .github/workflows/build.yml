@@ -1,25 +1,29 @@
-﻿name: Build Kivy App
+name: Build Kivy App
 on: [push, pull_request]
 
 jobs:
   build-android:
     name: Android Build
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/kivy/buildozer:latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Build with Buildozer
-        run: buildozer -v android debug
+        run: |
+          docker pull ghcr.io/kivy/buildozer:latest
+          docker run --rm \
+            -v "${{ github.workspace }}:/home/user/hostcwd" \
+            ghcr.io/kivy/buildozer:latest \
+            buildozer -v android debug
 
       - name: Upload APK
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: package
+          if-no-files-found: ignore
           path: |
             bin/*.apk
             .buildozer/android/platform/build-*/dists/*/build/outputs/**/*.apk
@@ -29,6 +33,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-logs
+          if-no-files-found: ignore
           path: |
             .buildozer/**/*.log
             *.log
