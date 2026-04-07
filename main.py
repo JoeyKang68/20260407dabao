@@ -6,12 +6,20 @@ from kivy.core.text import LabelBase, DEFAULT_FONT
 from kivy.uix.image import Image
 from kivy.uix.textinput import TextInput
 from kivy.uix.spinner import Spinner
+from kivy.resources import resource_find
 import datetime
 import csv
 from kivy.lang import Builder
 
-LabelBase.register(DEFAULT_FONT, 'simfang.ttf')
-LabelBase.register(name='SIMKAL',fn_regular='simfang.ttf')
+font_file = resource_find('simfang.ttf') or 'simfang.ttf'
+try:
+    LabelBase.register(DEFAULT_FONT, font_file)
+except Exception:
+    pass
+try:
+    LabelBase.register(name='SIMKAL', fn_regular=font_file)
+except Exception:
+    pass
 
 # 应用全局样式，解决下拉菜单选项中文乱码问题
 Builder.load_string('''
@@ -20,14 +28,33 @@ Builder.load_string('''
 ''')
 
 class MyApp(App):
-    global options1
-    global options2
-    with open(r"条款.csv", 'r', encoding='gbk') as f:
-        rows = list(csv.reader(f))
-    
-    options1 = [row[0] for row in rows if len(row) > 0 and row[0]]
-    options2 = [row[1] for row in rows if len(row) > 1 and row[1]]
+    def _get_resource_path(self, name):
+        path = resource_find(name)
+        if path:
+            return path
+        return name
+
+    def _load_clause_rows(self):
+        candidates = ['条款.csv', 'tiaokuan.csv']
+        encodings = ['gbk', 'gb18030', 'utf-8-sig', 'utf-8']
+        for filename in candidates:
+            file_path = self._get_resource_path(filename)
+            for enc in encodings:
+                try:
+                    with open(file_path, 'r', encoding=enc) as f:
+                        return list(csv.reader(f))
+                except Exception:
+                    pass
+        return []
+
     def build(self):
+        rows = self._load_clause_rows()
+        self.options1 = [row[0] for row in rows if len(row) > 0 and row[0]]
+        self.options2 = [row[1] for row in rows if len(row) > 1 and row[1]]
+        if not self.options1:
+            self.options1 = ['条款1']
+        if not self.options2:
+            self.options2 = ['']
 
         # 创建一个BoxLayout作为容器
         layout = BoxLayout(orientation='vertical', spacing=1, padding=1)
@@ -53,8 +80,8 @@ class MyApp(App):
         input25 = TextInput(text='闽 E', font_name='SIMKAL', multiline=False, size_hint=(0.6, 0.13),pos_hint={'x': 0.2, 'y': 0.5})
         input26 = TextInput(text='///////////', font_name='SIMKAL', multiline=False, size_hint=(0.6, 0.13),pos_hint={'x': 0.2, 'y': 0.5})
 
-        spinner1 = Spinner(values=options1, text='条款1',font_name='SIMKAL',size_hint=(0.6, 0.13),pos_hint={'x': 0.2, 'y': 0.5})
-        spinner2 = Spinner(values=options1, text='条款2', font_name='SIMKAL',size_hint=(0.6, 0.13), pos_hint={'x': 0.2, 'y': 0.5})
+        spinner1 = Spinner(values=self.options1, text='条款1',font_name='SIMKAL',size_hint=(0.6, 0.13),pos_hint={'x': 0.2, 'y': 0.5})
+        spinner2 = Spinner(values=self.options1, text='条款2', font_name='SIMKAL',size_hint=(0.6, 0.13), pos_hint={'x': 0.2, 'y': 0.5})
 
         input31 = TextInput(hint_text='事故事实', font_name='SIMKAL', multiline=True, size_hint=(0.8, 0.52),pos_hint={'x': 0.1, 'y': 0.5})
         input32 = TextInput(hint_text='事故成因以及事故责任', font_name='SIMKAL', multiline=True,size_hint=(0.8, 0.52), pos_hint={'x': 0.1, 'y': 0.5})
@@ -160,10 +187,10 @@ class MyApp(App):
 
     def on_spinner_select1(self, instance, value):
         global spintext1
-        spintext1=options2[options1.index(value)]
+        spintext1 = self.options2[self.options1.index(value)]
     def on_spinner_select2(self, instance, value):
         global spintext2
-        spintext2=options2[options1.index(value)]
+        spintext2 = self.options2[self.options1.index(value)]
 
 if __name__ == '__main__':
     MyApp().run()
