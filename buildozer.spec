@@ -20,7 +20,7 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy,python-docx
+requirements = python3,kivy,lxml,typing_extensions,python-docx
 
 # (str) Icon of the application
 icon.filename = picture.jpg
